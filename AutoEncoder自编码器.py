@@ -22,14 +22,16 @@ class AdditiveGaussianNoiseAutoencoder(object):
         network_weights = self._initialize_weights()
         self.weights = network_weights
 
-        # model
+        # model   R=w2(w1(x+0.1*n)+b1)+b2
         self.x = tf.placeholder(tf.float32, [None, self.n_input])
+        # 隐含层
         self.hidden = self.transfer(tf.add(tf.matmul(self.x + scale * tf.random_normal((n_input,)),
                 self.weights['w1']),
                 self.weights['b1']))
+        # 输出层
         self.reconstruction = tf.add(tf.matmul(self.hidden, self.weights['w2']), self.weights['b2'])
 
-        # cost
+        # cost   c=（r-x）^2
         self.cost = 0.5 * tf.reduce_sum(tf.pow(tf.subtract(self.reconstruction, self.x), 2.0))
         self.optimizer = optimizer.minimize(self.cost)
 
