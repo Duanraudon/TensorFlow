@@ -34,11 +34,12 @@ class AdditiveGaussianNoiseAutoencoder(object):
         # cost   c=（r-x）^2
         self.cost = 0.5 * tf.reduce_sum(tf.pow(tf.subtract(self.reconstruction, self.x), 2.0))
         self.optimizer = optimizer.minimize(self.cost)
-
+        #创建Session对话，初始化类内参数。
         init = tf.global_variables_initializer()
         self.sess = tf.Session()
         self.sess.run(init)
-
+        
+    #参数初始化函数，return:所有初始化的参数。
     def _initialize_weights(self):
         all_weights = dict()
         all_weights['w1'] = tf.Variable(xavier_init(self.n_input, self.n_hidden))
@@ -46,36 +47,37 @@ class AdditiveGaussianNoiseAutoencoder(object):
         all_weights['w2'] = tf.Variable(tf.zeros([self.n_hidden, self.n_input], dtype = tf.float32))
         all_weights['b2'] = tf.Variable(tf.zeros([self.n_input], dtype = tf.float32))
         return all_weights
-
+    #执行一步训练，输入样本，一步训练的损失函数 
     def partial_fit(self, X):
         cost, opt = self.sess.run((self.cost, self.optimizer), feed_dict = {self.x: X,
                                                                             self.scale: self.training_scale
                                                                             })
         return cost
-
+    #只求cost的损失函数
     def calc_total_cost(self, X):
         return self.sess.run(self.cost, feed_dict = {self.x: X,
                                                      self.scale: self.training_scale
                                                      })
-
+    #输出学到的高阶特征 
     def transform(self, X):
         return self.sess.run(self.hidden, feed_dict = {self.x: X,
                                                        self.scale: self.training_scale
                                                        })
-
+    #将隐含层的输出结果作为输入，通过之后的重建测层将提取到的高阶特征复原为原始数据。这个借口和前面的transform
+    #正好将整个自编码器拆分为两部分，这里的generate接口是后半部分，将高阶特征复原为原始数据的步骤。
     def generate(self, hidden = None):
         if hidden is None:
             hidden = np.random.normal(size = self.weights["b1"])
         return self.sess.run(self.reconstruction, feed_dict = {self.hidden: hidden})
-
+    #整体运行一遍复原过程，包括提取的高阶特征和通过高阶特征复原数据，即包括transform和generate两块，输入数据是原数据，输出数据是复员以后的数据。
     def reconstruct(self, X):
         return self.sess.run(self.reconstruction, feed_dict = {self.x: X,
                                                                self.scale: self.training_scale
                                                                })
-
+    #获取隐含层的权重W1 
     def getWeights(self):
         return self.sess.run(self.weights['w1'])
-
+    #获取隐含层的贬值系数b1
     def getBiases(self):
         return self.sess.run(self.weights['b1'])
         
@@ -83,13 +85,13 @@ class AdditiveGaussianNoiseAutoencoder(object):
         
         
 mnist = input_data.read_data_sets('MNIST_data', one_hot = True)
-
+#标准化训练、测试数据 
 def standard_scale(X_train, X_test):
     preprocessor = prep.StandardScaler().fit(X_train)
     X_train = preprocessor.transform(X_train)
     X_test = preprocessor.transform(X_test)
     return X_train, X_test
-
+#获取随机block数据，随机抽取样本起始位置。不放回抽样，提高数据的利用率。
 def get_random_block_from_data(data, batch_size):
     start_index = np.random.randint(0, len(data) - batch_size)
     return data[start_index:(start_index + batch_size)]
