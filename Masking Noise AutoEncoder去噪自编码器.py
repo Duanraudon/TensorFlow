@@ -95,14 +95,14 @@ def standard_scale(X_train, X_test):
 def get_random_block_from_data(data, batch_size):
     start_index = np.random.randint(0, len(data) - batch_size)
     return data[start_index:(start_index + batch_size)]
-
+#对训练集，测试集标椎化变换
 X_train, X_test = standard_scale(mnist.train.images, mnist.test.images)
-
+#最大训练轮数为20，训练集大小设为128，每一次训练显示一次损失值
 n_samples = int(mnist.train.num_examples)
 training_epochs = 20
 batch_size = 128
 display_step = 1
-
+#创建一个实例，输入节点数为784，隐含层节点数为200，激活函数为softplus，优化器为Adam且学习速率为0.001，将噪声系数scale设为0.01。
 autoencoder = AdditiveGaussianNoiseAutoencoder(n_input = 784,
                                                n_hidden = 200,
                                                transfer_function = tf.nn.softplus,
@@ -110,18 +110,20 @@ autoencoder = AdditiveGaussianNoiseAutoencoder(n_input = 784,
                                                scale = 0.01)
 
 for epoch in range(training_epochs):
+    #平均损失设为0
     avg_cost = 0.
+    #计算总共需要的batch数
     total_batch = int(n_samples / batch_size)
-    # Loop over all batches
+    # 循环所有批次
     for i in range(total_batch):
         batch_xs = get_random_block_from_data(X_train, batch_size)
 
-        # Fit training using batch data
+        # 训练batch数据并计算cost
         cost = autoencoder.partial_fit(batch_xs)
-        # Compute average loss
+        # 计算平均损失
         avg_cost += cost / n_samples * batch_size
 
-    # Display logs per epoch step
+    # 显示当前迭代数和这一轮的迭代的平均cost
     if epoch % display_step == 0:
         print("Epoch:", '%04d' % (epoch + 1), "cost=", "{:.9f}".format(avg_cost))
 
