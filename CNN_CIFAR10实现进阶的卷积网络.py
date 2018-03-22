@@ -110,3 +110,5 @@ while step < num_iter:
 #最后将准确率的评测结果计算并进行输出
 precision = true_count / total_sample_count
 print('precision @ 1 = %.3f' % precision)
+
+
